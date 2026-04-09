@@ -1,30 +1,17 @@
-# ==============================
-# Сборка Go
-# ==============================
-FROM golang:1.22.5 as builder
-
+# Stage 0: Builder
+FROM golang:1.22.5
 WORKDIR /go/src/github.com/AliyunContainerService/image-syncer
 COPY ./ ./
-
-# публичный Go proxy, без китайских mirrors
 ENV GOPROXY=https://proxy.golang.org,direct
-
-# сборка бинарника
 RUN CGO_ENABLED=0 GOOS=linux make
 
-# ==============================
-# Минималистичный runtime
-# ==============================
-FROM alpine:3.18  # используем стабильную версию
+# Stage 1: Runtime
+FROM alpine:3.18
 WORKDIR /bin/
+# используем индекс стадии 0 вместо имени builder
+COPY --from=0 /go/src/github.com/AliyunContainerService/image-syncer/image-syncer ./
+RUN chmod +x ./image-syncer \
+    && apk update && apk add --no-cache ca-certificates
 
-# копируем бинарь из builder
-COPY --from=builder /go/src/github.com/AliyunContainerService/image-syncer/image-syncer ./
-RUN chmod +x ./image-syncer
-
-# ставим сертификаты (Alpine сам обновит их)
-RUN apk update && apk add --no-cache ca-certificates
-
-# точка входа
 ENTRYPOINT ["image-syncer"]
 CMD ["--config", "/etc/image-syncer/image-syncer.json"]
