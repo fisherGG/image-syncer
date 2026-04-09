@@ -1,17 +1,16 @@
 # Stage 0: Builder
-FROM golang:1.22.5
+FROM golang:1.22.5 as builder
 WORKDIR /go/src/github.com/AliyunContainerService/image-syncer
 COPY ./ ./
 ENV GOPROXY=https://proxy.golang.org,direct
 RUN CGO_ENABLED=0 GOOS=linux make
 
-# Stage 1: Runtime
-FROM alpine:3.18
+# Stage 1: Runtime на UBI Minimal
+FROM registry.access.redhat.com/ubi8/ubi-minimal
 WORKDIR /bin/
-# используем индекс стадии 0 вместо имени builder
-COPY --from=0 /go/src/github.com/AliyunContainerService/image-syncer/image-syncer ./
-RUN chmod +x ./image-syncer \
-    && apk update && apk add --no-cache ca-certificates
+COPY --from=builder /go/src/github.com/AliyunContainerService/image-syncer/image-syncer ./
+# UBI уже содержит certs, можно проверить наличие
+RUN chmod +x ./image-syncer
 
 ENTRYPOINT ["image-syncer"]
 CMD ["--config", "/etc/image-syncer/image-syncer.json"]
