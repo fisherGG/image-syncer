@@ -13,8 +13,6 @@
 English | [简体中文](./README-zh_CN.md)
 
 ## Features
-
-- Support for many-to-many registry synchronization
 - Supports docker registry services based on Docker Registry V2 (e.g., Alibaba Cloud Container Registry Service, Docker Hub, Quay.io, Harbor, etc.)
 - Network & Memory Only, doesn't rely on any large disk storage, fast synchronization
 - Incremental Synchronization, ignore unchanged images automatically
